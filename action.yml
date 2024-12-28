@@ -1,0 +1,109 @@
+name: 'Invoke-AtomicRedTeam Action'
+description: 'Run local Atomic Red Team tests and adversary emulation'
+author: 'smolse'
+
+inputs:
+  technique:
+    description: 'ID of the technique to execute'
+    required: false
+  test-names:
+    description: 'Test names to execute'
+    required: false
+  test-numbers:
+    description: 'Test numbers to execute'
+    required: false
+  test-guids:
+    description: 'Test GUIDs to execute'
+    required: false
+  get-prereqs:
+    description: 'Get prerequisites for tests execution'
+    required: false
+    default: 'true'
+  cleanup:
+    description: 'Clean up after tests execution'
+    required: false
+    default: 'true'
+  adversary-emulation:
+    description: 'Execute adversary emulation based on a schedule file'
+    required: false
+    default: 'false'
+  list-of-atomics:
+    description: 'Path to adversary emulation CSV schedule file'
+    required: false
+
+runs:
+  using: 'composite'
+  steps:
+
+    - name: Validate action inputs
+      shell: pwsh
+      run: |
+        Write-Output '${{ toJson(inputs) }}'
+        if ('${{ inputs.adversary-emulation }}' -ne 'true' -and '${{ inputs.technique }}' -eq '') {
+            Write-Output "::error::Technique ID must be provided for atomic test execution"
+            exit 1
+        }
+
+        if ('${{ inputs.adversary-emulation }}' -eq 'true' -and '${{ inputs.list-of-atomics }}' -eq '') {
+            Write-Output "::error::List of atomics must be provided when adversary emulation is enabled"
+            exit 1
+        }
+
+    - name: Install Invoke-AtomicRedTeam
+      shell: pwsh
+      run: |
+        if (-not (Get-Module -ListAvailable -Name Invoke-AtomicRedTeam)) {
+            Install-Module -Name Invoke-AtomicRedTeam -Scope CurrentUser -Force
+            Write-Output "::notice::Invoke-AtomicRedTeam module has been installed"
+        } else {
+            Write-Output "::notice::Invoke-AtomicRedTeam module is already installed"
+        }
+    
+    - name: Install atomics folder
+      shell: pwsh
+      run: |
+        $atomicsPath = if (-not ($IsLinux -or $IsMacOS)) { "$env:HOME/AtomicRedTeam/atomics" } else { 'C:\AtomicRedTeam\atomics' }
+        if (-not (Test-Path $atomicsPath)) {
+            . ./scripts/Install-AtomicsFolder.ps1; Install-AtomicsFolder
+            Write-Output "::notice::Atomics folder has been installed"
+        } else {
+            Write-Output "::notice::Atomics folder is already installed"
+        }
+      working-directory: ${{ github.action_path }}
+
+    - name: Execute atomic technique
+      if: inputs.adversary-emulation != 'true'
+      shell: pwsh
+      run: |
+        $Params = @{}
+        if ('${{ inputs.test-names }}' -ne '') { $Params.TestNames = '${{ inputs.test-names }}'.Split(',') }
+        if ('${{ inputs.test-numbers }}' -ne '') { $Params.TestNumbers = '${{ inputs.test-numbers }}'.Split(',') }
+        if ('${{ inputs.test-guids }}' -ne '') { $Params.TestGuids = '${{ inputs.test-guids }}'.Split(',') }
+
+        if ('${{ inputs.get-prereqs }}' -eq 'true') {
+          Invoke-AtomicTest ${{ inputs.technique }} @Params -GetPrereqs
+        }
+        Invoke-AtomicTest ${{ inputs.technique }} @Params
+        if ('${{ inputs.cleanup }}' -eq 'true') {
+          Invoke-AtomicTest ${{ inputs.technique }} @Params -Cleanup
+        }
+
+    - name: Execute adversary emulation
+      if: inputs.adversary-emulation == 'true'
+      shell: pwsh
+      run: |
+        $Params = @{
+            ListOfAtomics = '${{ inputs.list-of-atomics }}'
+        }
+
+        if ('${{ inputs.get-prereqs }}' -eq 'true') {
+            Invoke-AtomicRunner @Params -GetPrereqs
+        }
+        Invoke-AtomicRunner @Params
+        if ('${{ inputs.cleanup }}' -eq 'true') {
+            Invoke-AtomicRunner @Params -Cleanup
+        }
+
+branding:
+  icon: 'shield'
+  color: 'blue'
