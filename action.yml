@@ -15,12 +15,15 @@ inputs:
   test-guids:
     description: 'Test GUIDs to execute'
     required: false
+  test-input-args:
+    description: 'Custom input arguments used by the atomic test'
+    required: false
   get-prereqs:
-    description: 'Get prerequisites for tests execution'
+    description: 'Get prerequisites for tests and schedules execution'
     required: false
     default: 'true'
   cleanup:
-    description: 'Clean up after tests execution'
+    description: 'Clean up after tests and schedules execution'
     required: false
     default: 'true'
   adversary-emulation:
@@ -79,6 +82,13 @@ runs:
         if ('${{ inputs.test-names }}' -ne '') { $Params.TestNames = '${{ inputs.test-names }}'.Split(',') }
         if ('${{ inputs.test-numbers }}' -ne '') { $Params.TestNumbers = '${{ inputs.test-numbers }}'.Split(',') }
         if ('${{ inputs.test-guids }}' -ne '') { $Params.TestGuids = '${{ inputs.test-guids }}'.Split(',') }
+        if ('${{ inputs.test-input-args }}' -ne '') {
+            $Params.InputArgs = @{}
+            $jsonArgs = ConvertFrom-Json '${{ inputs.test-input-args }}'
+            foreach ($key in $jsonArgs.PSObject.Properties.Name) {
+                $Params.InputArgs[$key] = $jsonArgs.$key
+            }
+        }
 
         if ('${{ inputs.get-prereqs }}' -eq 'true') {
           Invoke-AtomicTest ${{ inputs.technique }} @Params -GetPrereqs
