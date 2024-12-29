@@ -1,16 +1,10 @@
 # invoke-atomic-action
 
-This GitHub Action executes [Atomic Red Team](https://github.com/redcanaryco/atomic-red-team) tests and
-[adversary emulation](https://www.atomicredteam.io/invoke-atomicredteam/docs/adversary-emulation) schedules using the
-[Invoke-AtomicRedTeam](https://github.com/redcanaryco/invoke-atomicredteam) framework. Linux, macOS, and Windows
-runners are supported.
-
-> [!NOTE]  
-> This is an early version of the action and currently only supports the execution of Atomic Red Team tests locally on
-the GitHub Actions runners. In the next iteration, the plan is to implement:
-> - Execution of Atomic Red Team tests on remote systems
-> - Upload of execution logs to the workflow run artifacts
-> - More flexible configuration options
+This action executes [Atomic Red Team](https://github.com/redcanaryco/atomic-red-team) tests and
+[adversary emulation](https://www.atomicredteam.io/invoke-atomicredteam/docs/adversary-emulation) schedules directly
+on GitHub Actions runners with the help of the
+[Invoke-AtomicRedTeam](https://github.com/redcanaryco/invoke-atomicredteam) PowerShell framework. Linux, macOS, and
+Windows runners are supported.
 
 ## Usage
 
@@ -19,6 +13,12 @@ cmdlets used to execute tests and schedules. It primarily relies on the default 
 location (`C:\AtomicRedTeam\atomics` on Windows and `~/AtomicRedTeam/atomics` on Linux/macOS). The action installs
 `Invoke-AtomicRedTeam` from the PowerShell Gallery and downloads atomics from the Atomic Red Team GitHub repository if
 they are not already present on the runner.
+
+It's possible to customize the behavior of `Invoke-AtomicRunner` by placing a `privateConfig.ps1` script in the
+directory where the `Invoke-AtomicRedTeam` module is installed, as described in the
+[Invoke-AtomicRedTeam documentation](https://www.atomicredteam.io/invoke-atomicredteam/docs/continuous-atomic-testing).
+
+Execution logs are uploaded to the GitHub Actions workflow run as artifacts upon successful completion.
 
 ### Inputs
 
@@ -86,6 +86,20 @@ they are not already present on the runner.
 
   - Type: string
   - Optional
+
+- `logging-module`
+
+  Name of the logging module to use for the Atomic Red Team test execution. For example:
+    
+  ```yaml
+  with:
+    technique: T1033
+    logging-module: Attire-ExecutionLogger
+  ```
+    
+  - Type: string
+  - Optional
+  - Default: `Default-ExecutionLogger`
 
 - `get-prereqs`
 
