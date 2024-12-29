@@ -14,7 +14,11 @@ the GitHub Actions runners. In the next iteration, the plan is to implement:
 
 ## Usage
 
-Current version of the action 
+Currently, the action exposes minimal configuration options for the `Invoke-AtomicTest` and `Invoke-AtomicRunner`
+cmdlets used to execute tests and schedules. It primarily relies on the default settings and the default atomics
+location (`C:\AtomicRedTeam\atomics` on Windows and `~/AtomicRedTeam/atomics` on Linux/macOS). The action installs
+`Invoke-AtomicRedTeam` from the PowerShell Gallery and downloads atomics from the Atomic Red Team GitHub repository if
+they are not already present on the runner.
 
 ### Inputs
 
@@ -64,6 +68,20 @@ Current version of the action
   with:
     technique: T1033
     test-guids: dcb6cdee-1fb0-4087-8bf8-88cfd136ba51,1392bd0f-5d5a-429e-81d9-eb9d4d4d5b3b
+  ```
+
+  - Type: string
+  - Optional
+
+- `test-input-args`
+
+  Stringified JSON object containing the input arguments for the Atomic Red Team test. For example:
+
+  ```yaml
+  with:
+    technique: T1140
+    test-guids: 356dc0e8-684f-4428-bb94-9313998ad608
+    test-input-args: '{"message":"hello world"}'
   ```
 
   - Type: string
@@ -160,8 +178,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Run adversary emulation
-        uses: smolse/invoke-atomic-action@main
+      - uses: smolse/invoke-atomic-action@main
         with:
           adversary-emulation: true
           list-of-atomics: ./IcedID.csv
