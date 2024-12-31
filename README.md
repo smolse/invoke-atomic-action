@@ -101,6 +101,37 @@ Execution logs are uploaded to the GitHub Actions workflow run as artifacts upon
   - Optional
   - Default: `Default-ExecutionLogger`
 
+- `upload-log-artifact`
+
+  Flag to indicate whether to upload the execution logs as an artifact. For example:
+
+  ```yaml
+  with:
+    technique: T1033
+    upload-log-artifact: false
+  ```
+
+  - Type: string
+  - Optional
+  - Default: `true`
+
+- `log-artifact-name`
+
+  Name of the artifact containing the execution logs. For example:
+
+  ```yaml
+  with:
+    technique: T1033
+    log-artifact-name: T1033-logs
+  ```
+
+  If the action is executed more than once in the same workflow run, ensure this argument is set to a unique value
+  for each execution to prevent artifact upload failures.
+
+  - Type: string
+  - Optional
+  - Default: `invoke-atomic-execution-logs`
+
 - `get-prereqs`
 
   Flag to indicate whether to try to install the prerequisites for the Atomic Red Team tests. For example:

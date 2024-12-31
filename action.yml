@@ -22,6 +22,14 @@ inputs:
     description: 'Logging module for test execution logs' 
     required: false
     default: 'Default-ExecutionLogger'
+  upload-log-artifact:
+    description: 'Upload log artifact'
+    required: false
+    default: 'true'
+  log-artifact-name:
+    description: 'Name of the log artifact'
+    required: false
+    default: 'invoke-atomic-execution-logs'
   get-prereqs:
     description: 'Get prerequisites for tests execution'
     required: false
@@ -122,6 +130,7 @@ runs:
 
     - name: Determine log artifact
       id: log-artifact
+      if: inputs.upload-log-artifact == 'true'
       shell: pwsh
       run: |
         if ('${{ inputs.adversary-emulation }}' -eq 'true') {
@@ -148,10 +157,10 @@ runs:
         }
 
     - name: Archive execution logs
-      if: steps.log-artifact.outputs.path
+      if: inputs.upload-log-artifact == 'true' && steps.log-artifact.outputs.path
       uses: actions/upload-artifact@v4
       with:
-        name: invoke-atomic-execution-logs
+        name: ${{ inputs.log-artifact-name }}
         path: ${{ steps.log-artifact.outputs.path }}
 
 branding:
