@@ -1,0 +1,40 @@
+name: Test a Windows Technique
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  test-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./
+        with:
+          technique: T1055.003
+          test-numbers: 1
+          log-artifact-name: test-windows
+
+  test-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./
+        with:
+          technique: T1070.003
+          test-numbers: 2
+          log-artifact-name: test-linux
+
+  test-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./
+        with:
+          technique: T1070.006
+          test-numbers: 9
+          log-artifact-name: test-macos
